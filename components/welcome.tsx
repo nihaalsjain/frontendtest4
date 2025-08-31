@@ -69,12 +69,9 @@ export const Welcome = ({
           हिंदी
         </Button>
       </div>
-
       <Button variant="primary" size="lg" onClick={onStartCall} className="mt-6 w-64 font-mono">
         {startButtonText}
       </Button>
-
-      
     </div>
   );
 };
