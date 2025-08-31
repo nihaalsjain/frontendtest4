@@ -26,13 +26,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           />
         </a>
         <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
-          Invented for life{' '}
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-4"
-          >
-          </a>
+          Invented for life
         </span>
       </header>
       {children}
