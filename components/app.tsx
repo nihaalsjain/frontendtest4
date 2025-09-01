@@ -11,8 +11,7 @@ import { Welcome } from '@/components/welcome';
 import useConnectionDetails from '@/hooks/useConnectionDetails';
 import type { AppConfig } from '@/lib/types';
 
-// Only motion-wrap Welcome (or even skip it if you like)
-// If you keep it, you can let Motion infer props.
+// Only motion-wrap Welcome
 const MotionWelcome = motion.create(Welcome);
 
 interface AppProps {
@@ -23,15 +22,28 @@ export function App({ appConfig }: AppProps) {
   const room = useMemo(() => new Room(), []);
   const [sessionStarted, setSessionStarted] = useState(false);
 
-  const [language, setLanguage] = useState<'en' | 'kn' | 'hi'>('en');
+  // ✅ language can start as null
+  const [language, setLanguage] = useState<'en' | 'kn' | 'hi' | null>(null);
+  const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>('Voice Assistant');
 
   const handleLanguageChange = (lang: 'en' | 'kn' | 'hi') => {
     setLanguage(lang);
     if (room.state === 'connected') {
       try {
-        room.localParticipant.setMetadata(JSON.stringify({ language: lang }));
+        room.localParticipant.setMetadata(JSON.stringify({ language: lang, voiceBase }));
       } catch (e) {
         console.warn('setMetadata failed:', e);
+      }
+    }
+  };
+
+  const handleVoiceBaseChange = (base: 'Voice Assistant' | 'Live Assistant') => {
+    setVoiceBase(base);
+    if (room.state === 'connected') {
+      try {
+        room.localParticipant.setMetadata(JSON.stringify({ language, voiceBase: base }));
+      } catch (e) {
+        console.warn('setMetadata (voiceBase) failed:', e);
       }
     }
   };
@@ -56,7 +68,8 @@ export function App({ appConfig }: AppProps) {
 
   useEffect(() => {
     let aborted = false;
-    if (sessionStarted && room.state === 'disconnected') {
+    // ✅ Only connect if language is selected
+    if (sessionStarted && room.state === 'disconnected' && language) {
       Promise.all([
         room.localParticipant.setMicrophoneEnabled(true, undefined, {
           preConnectBuffer: appConfig.isPreConnectBufferEnabled,
@@ -64,7 +77,7 @@ export function App({ appConfig }: AppProps) {
         fetchConnectionDetails(language).then(async (connectionDetails) => {
           await room.connect(connectionDetails.serverUrl, connectionDetails.participantToken);
           try {
-            room.localParticipant.setMetadata(JSON.stringify({ language }));
+            room.localParticipant.setMetadata(JSON.stringify({ language, voiceBase }));
           } catch (e) {
             console.warn('setMetadata (post-connect) failed:', e);
           }
@@ -81,7 +94,14 @@ export function App({ appConfig }: AppProps) {
       aborted = true;
       room.disconnect();
     };
-  }, [room, sessionStarted, fetchConnectionDetails, appConfig.isPreConnectBufferEnabled, language]);
+  }, [
+    room,
+    sessionStarted,
+    fetchConnectionDetails,
+    appConfig.isPreConnectBufferEnabled,
+    language,
+    voiceBase,
+  ]);
 
   const { startButtonText } = appConfig;
 
@@ -94,6 +114,8 @@ export function App({ appConfig }: AppProps) {
         disabled={sessionStarted}
         language={language}
         onLanguageChange={handleLanguageChange}
+        voiceBase={voiceBase}
+        onVoiceBaseChange={handleVoiceBaseChange}
         initial={{ opacity: 0 }}
         animate={{ opacity: sessionStarted ? 0 : 1 }}
         transition={{ duration: 0.5, ease: 'linear', delay: sessionStarted ? 0 : 0.5 }}
@@ -103,19 +125,21 @@ export function App({ appConfig }: AppProps) {
         <RoomAudioRenderer />
         <StartAudio label="Start Audio" />
 
-        {/* ✅ Wrap the custom component in a motion.div container */}
+        {/* ✅ Only render SessionView if a language is chosen */}
         <motion.div
           key="session-view"
           initial={{ opacity: 0 }}
           animate={{ opacity: sessionStarted ? 1 : 0 }}
           transition={{ duration: 0.5, ease: 'linear', delay: sessionStarted ? 0.5 : 0 }}
         >
-          <SessionView
-            appConfig={appConfig}
-            disabled={!sessionStarted}
-            sessionStarted={sessionStarted}
-            language={language}
-          />
+          {language && (
+            <SessionView
+              appConfig={appConfig}
+              disabled={!sessionStarted}
+              sessionStarted={sessionStarted}
+              language={language} // ✅ safe: only rendered if not null
+            />
+          )}
         </motion.div>
       </RoomContext.Provider>
 
