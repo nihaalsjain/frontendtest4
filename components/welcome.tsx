@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface WelcomeProps {
@@ -55,7 +55,13 @@ export const Welcome = ({
       className="fixed inset-0 z-10 mx-auto flex h-svh flex-col items-center justify-center text-center"
     >
       {/* Logos */}
-      <img src="/bosch_logo_embedded.svg" alt="Bosch Logo" width={180} height={180} className="mb-4" />
+      <img
+        src="/bosch_logo_embedded.svg"
+        alt="Bosch Logo"
+        width={180}
+        height={180}
+        className="mb-4"
+      />
       <img src="/allion_img.png" alt="Allion Logo" width={250} height={200} className="mb-4" />
 
       {/* Heading */}
@@ -67,7 +73,7 @@ export const Welcome = ({
       <div className="relative mt-4 w-64" ref={dropdownRef}>
         <Button
           onClick={() => setIsLangOpen((prev) => !prev)}
-          className={`w-full py-2 flex justify-between items-center ${
+          className={`flex w-full items-center justify-between py-2 ${
             selectedLang ? 'bg-blue-600 text-white' : 'bg-gray-400 text-black'
           }`}
         >
@@ -76,16 +82,14 @@ export const Welcome = ({
         </Button>
 
         {isLangOpen && (
-          <div
-            className="absolute left-0 top-full mt-2 w-full rounded-lg border border-gray-300 bg-white shadow-lg z-[9999] max-h-40 overflow-y-auto"
-          >
+          <div className="absolute top-full left-0 z-[9999] mt-2 max-h-40 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-lg">
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleSelect(lang.code as 'en' | 'kn' | 'hi')}
                 className={`block w-full px-4 py-2 text-left text-black ${
                   language === lang.code
-                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                    ? 'bg-blue-100 font-semibold text-blue-700'
                     : 'hover:bg-gray-100'
                 }`}
               >
@@ -128,9 +132,7 @@ export const Welcome = ({
         size="lg"
         onClick={onStartCall}
         disabled={!language}
-        className={`mt-6 w-64 font-mono ${
-          !language ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
+        className={`mt-6 w-64 font-mono ${!language ? 'cursor-not-allowed opacity-50' : ''}`}
       >
         {startButtonText}
       </Button>

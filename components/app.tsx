@@ -24,7 +24,9 @@ export function App({ appConfig }: AppProps) {
 
   // ✅ language can start as null
   const [language, setLanguage] = useState<'en' | 'kn' | 'hi' | null>(null);
-  const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>('Voice Assistant');
+  const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>(
+    'Voice Assistant'
+  );
 
   const handleLanguageChange = (lang: 'en' | 'kn' | 'hi') => {
     setLanguage(lang);
