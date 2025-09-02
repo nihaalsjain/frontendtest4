@@ -4,14 +4,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { Room, RoomEvent } from 'livekit-client';
 import { motion } from 'motion/react';
 import { Toaster } from 'sonner';
-import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
+import {
+  RoomAudioRenderer,
+  RoomContext,
+  StartAudio,
+} from '@livekit/components-react';
 import { toastAlert } from '@/components/alert-toast';
 import { SessionView } from '@/components/session-view';
 import { Welcome } from '@/components/welcome';
 import useConnectionDetails from '@/hooks/useConnectionDetails';
 import type { AppConfig } from '@/lib/types';
 
-// Only motion-wrap Welcome
+// Motion-wrap Welcome
 const MotionWelcome = motion.create(Welcome);
 
 interface AppProps {
@@ -22,7 +26,6 @@ export function App({ appConfig }: AppProps) {
   const room = useMemo(() => new Room(), []);
   const [sessionStarted, setSessionStarted] = useState(false);
 
-  // ✅ language can start as null
   const [language, setLanguage] = useState<'en' | 'kn' | 'hi' | null>(null);
   const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>(
     'Voice Assistant'
@@ -70,20 +73,19 @@ export function App({ appConfig }: AppProps) {
 
   useEffect(() => {
     let aborted = false;
-    // ✅ Only connect if language is selected
     if (sessionStarted && room.state === 'disconnected' && language) {
       Promise.all([
         room.localParticipant.setMicrophoneEnabled(true, undefined, {
           preConnectBuffer: appConfig.isPreConnectBufferEnabled,
         }),
-        fetchConnectionDetails(language).then(async (connectionDetails) => {
-          await room.connect(connectionDetails.serverUrl, connectionDetails.participantToken);
-          try {
-            room.localParticipant.setMetadata(JSON.stringify({ language, voiceBase }));
-          } catch (e) {
-            console.warn('setMetadata (post-connect) failed:', e);
+        fetchConnectionDetails(language, voiceBase).then(
+          async (connectionDetails) => {
+            await room.connect(
+              connectionDetails.serverUrl,
+              connectionDetails.participantToken
+            );
           }
-        }),
+        ),
       ]).catch((error) => {
         if (aborted) return;
         toastAlert({
@@ -120,26 +122,33 @@ export function App({ appConfig }: AppProps) {
         onVoiceBaseChange={handleVoiceBaseChange}
         initial={{ opacity: 0 }}
         animate={{ opacity: sessionStarted ? 0 : 1 }}
-        transition={{ duration: 0.5, ease: 'linear', delay: sessionStarted ? 0 : 0.5 }}
+        transition={{
+          duration: 0.5,
+          ease: 'linear',
+          delay: sessionStarted ? 0 : 0.5,
+        }}
       />
 
       <RoomContext.Provider value={room}>
         <RoomAudioRenderer />
         <StartAudio label="Start Audio" />
 
-        {/* ✅ Only render SessionView if a language is chosen */}
         <motion.div
           key="session-view"
           initial={{ opacity: 0 }}
           animate={{ opacity: sessionStarted ? 1 : 0 }}
-          transition={{ duration: 0.5, ease: 'linear', delay: sessionStarted ? 0.5 : 0 }}
+          transition={{
+            duration: 0.5,
+            ease: 'linear',
+            delay: sessionStarted ? 0.5 : 0,
+          }}
         >
           {language && (
             <SessionView
               appConfig={appConfig}
               disabled={!sessionStarted}
               sessionStarted={sessionStarted}
-              language={language} // ✅ safe: only rendered if not null
+              language={language}
             />
           )}
         </motion.div>

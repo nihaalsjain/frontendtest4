@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     if (!LIVEKIT_URL) throw new Error('LIVEKIT_URL is not defined');
 
     const language = new URL(req.url).searchParams.get('language') ?? 'en';
-
+    const voiceBase = new URL(req.url).searchParams.get('voiceBase') ?? 'Voice Assistant';
     const participantName = 'user';
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       {
         identity: participantIdentity,
         name: participantName,
-        metadata: JSON.stringify({ language }),
+        metadata: JSON.stringify({ language, voiceBase }),
       },
       roomName
     ); // ← no trailing comma here
