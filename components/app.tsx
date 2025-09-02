@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Room, RoomEvent } from 'livekit-client';
 import { motion } from 'motion/react';
 import { Toaster } from 'sonner';
-import {
-  RoomAudioRenderer,
-  RoomContext,
-  StartAudio,
-} from '@livekit/components-react';
+import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
 import { toastAlert } from '@/components/alert-toast';
 import { SessionView } from '@/components/session-view';
 import { Welcome } from '@/components/welcome';
@@ -78,14 +74,9 @@ export function App({ appConfig }: AppProps) {
         room.localParticipant.setMicrophoneEnabled(true, undefined, {
           preConnectBuffer: appConfig.isPreConnectBufferEnabled,
         }),
-        fetchConnectionDetails(language, voiceBase).then(
-          async (connectionDetails) => {
-            await room.connect(
-              connectionDetails.serverUrl,
-              connectionDetails.participantToken
-            );
-          }
-        ),
+        fetchConnectionDetails(language, voiceBase).then(async (connectionDetails) => {
+          await room.connect(connectionDetails.serverUrl, connectionDetails.participantToken);
+        }),
       ]).catch((error) => {
         if (aborted) return;
         toastAlert({
