@@ -25,7 +25,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             className="hidden size-15 dark:block"
           />
         </a>
-        <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
+        <span className="text-black font-mono text-xs font-bold tracking-wider uppercase">
           Invented for life
         </span>
       </header>
