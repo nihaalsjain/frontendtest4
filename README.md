@@ -57,7 +57,9 @@ allion\Scripts\activate
 node --version
 npm --version
 ```
+
 If node and npm are not found
+
 ```bash
 winget install OpenJS.NodeJS
 npm install -g pnpm
