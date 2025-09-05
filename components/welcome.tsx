@@ -35,7 +35,7 @@ export const Welcome = ({
     <div
       ref={ref}
       inert={disabled}
-      className="fixed inset-0 z-10 mx-auto flex h-svh flex-col items-center justify-center text-center bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900"
+      className="fixed inset-0 z-10 mx-auto flex h-svh flex-col items-center justify-center text-center bg-gradient-to-br from-purple-900 via-blue-900 to-slate-900"
     >
       {/* Background ambient glow */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 blur-3xl"></div>
@@ -76,7 +76,7 @@ export const Welcome = ({
         </div>
 
         <h1 className="text-gray-200 text-lg mb-12 font-medium drop-shadow-sm">
-          Chat live with Mechanic's Trusted Co-Pilot
+          {language === 'kn' ? 'ಮೆಕ್ಯಾನಿಕ್‌ನ ವಿಶ್ವಾಸಾರ್ಹ ಸಹ-ಪೈಲಟ್' : language === 'hi' ? 'मैकेनिक का विश्वसनीय सह-पायलट' : 'Mechanic\'s Trusted Co-Pilot'}
         </h1>
       
         {/* Main Content */}
@@ -125,7 +125,7 @@ export const Welcome = ({
                     : 'text-gray-600 hover:text-gray-800'
                 } ${!language ? 'cursor-not-allowed' : ''}`}
             >
-                VOICE ASSISTANT
+                {language === 'kn' ? 'ಧ್ವನಿ ಸಹಾಯಕ' : language === 'hi' ? 'ध्वनि सहायक' : 'VOICE ASSISTANT'}
             </button>
             <button
                 onClick={() => onVoiceBaseChange('Live Assistant')}
@@ -136,7 +136,7 @@ export const Welcome = ({
                     : 'text-gray-600 hover:text-gray-800'
                 } ${!language ? 'cursor-not-allowed' : ''}`}
             >
-                LIVE ASSISTANT
+                {language === 'kn' ? 'ಲೈವ್ ಸಹಾಯಕ' : language === 'hi' ? 'लाइव सहायक' : 'LIVE ASSISTANT'}
             </button>
             </div>
 
