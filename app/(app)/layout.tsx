@@ -11,12 +11,12 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 z-50 hidden w-full flex-row justify-between p-6 md:flex">
+      <header className="fixed top-0 left-10 z-50 hidden w-full flex-row justify-between p-6 md:flex">
         <a
           target="_blank"
           rel="noopener noreferrer"
           href="https://www.bosch.in/"
-          className="scale-100 transition-transform duration-300 hover:scale-110"
+          className="scale-300 transition-transform duration-300 hover:scale-410"
         >
           <img src={logo} alt={`${companyName} Logo`} className="block size-15 dark:hidden" />
           <img
@@ -25,9 +25,6 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             className="hidden size-15 dark:block"
           />
         </a>
-        <span className="text-black font-mono text-xs font-bold tracking-wider uppercase">
-          Invented for life
-        </span>
       </header>
       {children}
     </>
