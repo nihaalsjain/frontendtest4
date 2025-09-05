@@ -1,9 +1,6 @@
 # Agent Starter for Allion AI (React based)
 
-This is a starter template for [LiveKit Agents](https://docs.livekit.io/agents) that provides a simple voice interface using the [LiveKit JavaScript SDK](https://github.com/livekit/client-sdk-js). It supports [voice](https://docs.livekit.io/agents/start/voice-ai), [transcriptions](https://docs.livekit.io/agents/build/text/), and [virtual avatars](https://docs.livekit.io/agents/integrations/avatar).
-
-Also available for:
-[Android](https://github.com/livekit-examples/agent-starter-android) • [Flutter](https://github.com/livekit-examples/agent-starter-flutter) • [Swift](https://github.com/livekit-examples/agent-starter-swift) • [React Native](https://github.com/livekit-examples/agent-starter-react-native)
+This is a UI for Allion AI to be launched on the browser with connections to mic based on [React Native](https://github.com/livekit-examples/agent-starter-react-native)
 
 <picture>
   <source srcset="./.github/assets/readme-hero-dark.webp" media="(prefers-color-scheme: dark)">
@@ -13,15 +10,13 @@ Also available for:
 
 ### Features:
 
-- Real-time voice interaction with LiveKit Agents
+- Real-time voice interaction with Allion Agents
 - Camera video streaming support
 - Screen sharing capabilities
 - Audio visualization and level monitoring
 - Virtual avatar integration
 - Light/dark theme switching with system preference detection
 - Customizable branding, colors, and UI text via configuration
-
-This template is built with Next.js and is free for you to use or modify as you see fit.
 
 ### Project structure
 
@@ -56,7 +51,16 @@ agent-starter-react/
 Run the following command to automatically clone this template.
 
 ```bash
-lk app create --template voice-assistant-frontend
+python -m venv allion
+allion\Scripts\activate
+
+node --version
+npm --version
+```
+If node and npm are not found
+```bash
+winget install OpenJS.NodeJS
+npm install -g pnpm
 ```
 
 Then run the app with:
@@ -104,8 +108,4 @@ LIVEKIT_API_SECRET=your_livekit_api_secret
 LIVEKIT_URL=https://your-livekit-server-url
 ```
 
-These are required for the voice agent functionality to work with your LiveKit project.
-
-## Contributing
-
-This template is open source and we welcome contributions! Please open a PR or issue through GitHub, and don't forget to join us in the [LiveKit Community Slack](https://livekit.io/join-slack)!
+These are required for the voice agent functionality to work with the backend
