@@ -13,11 +13,11 @@ import { AgentControlBar } from '@/components/livekit/agent-control-bar/agent-co
 import { ChatEntry } from '@/components/livekit/chat/chat-entry';
 import { ChatMessageView } from '@/components/livekit/chat/chat-message-view';
 import { MediaTiles } from '@/components/livekit/media-tiles';
+import WaitMusic from '@/components/wait-music';
 import useChatAndTranscription from '@/hooks/useChatAndTranscription';
 import { useDebugMode } from '@/hooks/useDebug';
 import type { AppConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import WaitMusic from '@/components/wait-music';
 
 function isAgentAvailable(agentState: AgentState) {
   return agentState == 'listening' || agentState == 'thinking' || agentState == 'speaking';
@@ -88,7 +88,7 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
     const capabilities = { supportsChatInput, supportsVideoInput, supportsScreenShare };
 
     // ---- Wait-music state mapping ----
-    const isThinking = agentState === 'thinking' ;
+    const isThinking = agentState === 'thinking';
     const isSpeaking = agentState === 'speaking';
     const playWaitMusic = sessionStarted && isThinking;
 

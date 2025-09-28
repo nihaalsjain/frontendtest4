@@ -67,13 +67,17 @@ export default function WaitMusic({
 
     if (play) {
       // play() must follow a user gesture; StartAudio in your app unlocks audio.
-      a.play().catch(() => {/* ignore */});
+      a.play().catch(() => {
+        /* ignore */
+      });
       fade(duck && isSpeaking ? Math.min(0.08, volume * 0.3) : volume, fadeInMs);
     } else {
       // fade out then pause
       fade(0, fadeOutMs);
       const t = setTimeout(() => {
-        try { a.pause(); } catch {}
+        try {
+          a.pause();
+        } catch {}
       }, fadeOutMs + 30);
       return () => clearTimeout(t);
     }
