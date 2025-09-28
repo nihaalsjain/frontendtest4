@@ -17,6 +17,7 @@ import useChatAndTranscription from '@/hooks/useChatAndTranscription';
 import { useDebugMode } from '@/hooks/useDebug';
 import type { AppConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import WaitMusic from '@/components/wait-music';
 
 function isAgentAvailable(agentState: AgentState) {
   return agentState == 'listening' || agentState == 'thinking' || agentState == 'speaking';
@@ -86,6 +87,11 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
     const { supportsChatInput, supportsVideoInput, supportsScreenShare } = appConfig;
     const capabilities = { supportsChatInput, supportsVideoInput, supportsScreenShare };
 
+    // ---- Wait-music state mapping ----
+    const isThinking = agentState === 'thinking' ;
+    const isSpeaking = agentState === 'speaking';
+    const playWaitMusic = sessionStarted && isThinking;
+
     return (
       <main
         ref={ref}
@@ -94,6 +100,15 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
         inert={disabled}
         className={cn(!chatOpen && 'max-h-svh overflow-hidden', mainProps.className)}
       >
+        {/* Background “waiting” music; loop file in /public/audio/waiting-loop.mp3 */}
+        <WaitMusic
+          play={playWaitMusic}
+          isSpeaking={isSpeaking}
+          duck
+          src="/audio/waiting-loop.mp3"
+          volume={0.22}
+        />
+
         <ChatMessageView
           className={cn(
             'mx-auto min-h-svh w-full max-w-2xl px-3 pt-32 pb-40 transition-[opacity,translate] duration-300 ease-out md:px-0 md:pt-36 md:pb-48',
