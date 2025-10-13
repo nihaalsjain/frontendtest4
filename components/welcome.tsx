@@ -52,9 +52,7 @@ export const Welcome = ({
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600 opacity-20 blur-xl"></div>
 
               {/* Main ring with rotation */}
-              <div
-                className="absolute inset-4 animate-spin rounded-full border-4 border-transparent bg-transparent [animation-duration:8s]"
-              >
+              <div className="absolute inset-4 animate-spin rounded-full border-4 border-transparent bg-transparent [animation-duration:8s]">
                 <div className="h-full w-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 opacity-80 blur-sm"></div>
               </div>
 
