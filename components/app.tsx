@@ -22,12 +22,12 @@ export function App({ appConfig }: AppProps) {
   const room = useMemo(() => new Room(), []);
   const [sessionStarted, setSessionStarted] = useState(false);
 
-  const [language, setLanguage] = useState<'en' | 'kn' | 'hi' | null>(null);
+  const [language, setLanguage] = useState<'en' | 'kn' | 'hi' | 'ta' | null>(null);
   const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>(
     'Voice Assistant'
   );
 
-  const handleLanguageChange = (lang: 'en' | 'kn' | 'hi') => {
+  const handleLanguageChange = (lang: 'en' | 'kn' | 'hi' | 'ta') => {
     setLanguage(lang);
     if (room.state === 'connected') {
       try {

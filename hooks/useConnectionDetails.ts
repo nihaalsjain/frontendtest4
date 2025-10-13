@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { ConnectionDetails } from '@/app/api/connection-details/route';
 
-export type Language = 'en' | 'kn' | 'hi';
+export type Language = 'en' | 'kn' | 'hi' | 'ta';
 export type VoiceBase = 'Voice Assistant' | 'Live Assistant';
 export default function useConnectionDetails() {
   // Pass the selected language to the token endpoint

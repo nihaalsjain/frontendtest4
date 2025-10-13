@@ -5,8 +5,8 @@ interface WelcomeProps {
   disabled: boolean;
   startButtonText: string;
   onStartCall: () => void;
-  language: 'en' | 'kn' | 'hi' | null; // allow null
-  onLanguageChange: (lang: 'en' | 'kn' | 'hi') => void;
+  language: 'en' | 'kn' | 'hi' | 'ta' | null; // allow null
+  onLanguageChange: (lang: 'en' | 'kn' | 'hi' | 'ta') => void;
   voiceBase: 'Voice Assistant' | 'Live Assistant';
   onVoiceBaseChange: (base: 'Voice Assistant' | 'Live Assistant') => void;
 }
@@ -27,6 +27,7 @@ export const Welcome = ({
     { code: 'en', label: 'English' },
     { code: 'kn', label: 'ಕನ್ನಡ' },
     { code: 'hi', label: 'हिंदी' },
+    { code: 'ta', label: 'தமிழ்' },
   ];
 
   const selectedLang = languages.find((l) => l.code === language);
@@ -52,8 +53,7 @@ export const Welcome = ({
 
               {/* Main ring with rotation */}
               <div
-                className="absolute inset-4 animate-spin rounded-full border-4 border-transparent bg-transparent"
-                style={{ animationDuration: '8s' }}
+                className="absolute inset-4 animate-spin rounded-full border-4 border-transparent bg-transparent [animation-duration:8s]"
               >
                 <div className="h-full w-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 opacity-80 blur-sm"></div>
               </div>
@@ -84,7 +84,9 @@ export const Welcome = ({
             ? 'ಮೆಕ್ಯಾನಿಕ್‌ನ ವಿಶ್ವಾಸಾರ್ಹ ಸಹ-ಪೈಲಟ್'
             : language === 'hi'
               ? 'मैकेनिक का विश्वसनीय सह-पायलट'
-              : "Mechanic's Trusted Co-Pilot"}
+              : language === 'ta'
+                ? 'மேக்கானிக்கிற்கான நம்பத்தகுந்த துணை விமானி'
+                : "Mechanic's Trusted Co-Pilot"}
         </h1>
 
         {/* Main Content */}
@@ -110,7 +112,7 @@ export const Welcome = ({
                   <button
                     key={lang.code}
                     onClick={() => {
-                      onLanguageChange(lang.code as 'en' | 'kn' | 'hi');
+                      onLanguageChange(lang.code as 'en' | 'kn' | 'hi' | 'ta');
                       setIsLanguageDropdownOpen(false);
                     }}
                     className="w-full px-4 py-3 text-left text-gray-600 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-gray-50"
@@ -137,7 +139,9 @@ export const Welcome = ({
                 ? 'ಧ್ವನಿ ಸಹಾಯಕ'
                 : language === 'hi'
                   ? 'ध्वनि सहायक'
-                  : 'VOICE ASSISTANT'}
+                  : language === 'ta'
+                    ? 'குரல் உதவியாளர்'
+                    : 'VOICE ASSISTANT'}
             </button>
             <button
               onClick={() => onVoiceBaseChange('Live Assistant')}
@@ -152,7 +156,9 @@ export const Welcome = ({
                 ? 'ಲೈವ್ ಸಹಾಯಕ'
                 : language === 'hi'
                   ? 'लाइव सहायक'
-                  : 'LIVE ASSISTANT'}
+                  : language === 'ta'
+                    ? 'நேரடி உதவியாளர்'
+                    : 'LIVE ASSISTANT'}
             </button>
           </div>
 
@@ -172,7 +178,9 @@ export const Welcome = ({
                 ? 'ಕರೆ ಪ್ರಾರಂಭಿಸಿ'
                 : language === 'hi'
                   ? 'कॉल शुरू करें'
-                  : 'Start Call'}
+                  : language === 'ta'
+                    ? 'அழைப்பை தொடங்குக'
+                    : 'Start Call'}
             </span>
           </button>
         </div>

@@ -27,7 +27,7 @@ export interface SessionViewProps {
   disabled: boolean;
   sessionStarted: boolean;
   /** UI language for labels/subtitles/etc. */
-  language: 'en' | 'kn' | 'hi';
+  language: 'en' | 'kn' | 'hi' | 'ta';
 }
 
 /** Full props including native <main> attributes */
