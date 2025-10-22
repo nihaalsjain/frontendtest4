@@ -40,8 +40,13 @@ const enhancedMessageFormatter: MessageFormatter = (message: string) => {
 
 export const useChatMessage = (entry: ReceivedChatMessage, messageFormatter?: MessageFormatter) => {
   const formattedMessage = React.useMemo(() => {
-    const formatter = messageFormatter || enhancedMessageFormatter;
-    return formatter(entry.message);
+    if (messageFormatter) {
+      const result = messageFormatter(entry.message);
+      // If the formatter returns a ReactNode that's not a string, convert it back to string
+      return typeof result === 'string' ? result : entry.message;
+    }
+    // Use our enhanced formatter which always returns a string
+    return enhancedMessageFormatter(entry.message);
   }, [entry.message, messageFormatter]);
 
   const hasBeenEdited = !!entry.editTimestamp;
