@@ -61,6 +61,40 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
           /^• (.+)$/gm,
           '<div class="flex items-start mb-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded"><span class="text-blue-500 mr-3 mt-1 text-lg">•</span><span class="text-gray-800 dark:text-gray-200 leading-relaxed">$1</span></div>'
         )
+        // Convert URLs to clickable links (improved regex for better URL detection)
+        .replace(
+          /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)/gi,
+          '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all">$1</a>'
+        )
+        // Convert YouTube URLs to clickable thumbnails with special styling
+        .replace(
+          /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/gi,
+          (match, videoId) => {
+            return `<div class="my-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <a href="${match}" target="_blank" rel="noopener noreferrer" class="block group">
+                <div class="flex items-center space-x-3">
+                  <div class="relative flex-shrink-0">
+                    <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" 
+                         alt="YouTube Thumbnail" 
+                         class="w-20 h-15 object-cover rounded group-hover:shadow-lg transition-shadow"
+                         onerror="this.src='https://img.youtube.com/vi/default/default.jpg'"/>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded group-hover:bg-opacity-30 transition-all">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors">
+                      Watch on YouTube
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${match}</p>
+                  </div>
+                </div>
+              </a>
+            </div>`;
+          }
+        )
         // Convert line breaks
         .replace(/\n\n/g, '<div class="my-4"></div>')
         .replace(/\n/g, '<br>')
@@ -87,12 +121,12 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              'bg-background fixed top-0 right-0 z-50 h-full w-full max-w-2xl overflow-hidden border-l shadow-2xl',
+              'bg-background fixed top-0 right-0 z-50 flex h-full w-full max-w-2xl flex-col border-l shadow-2xl',
               className
             )}
           >
             {/* Header */}
-            <div className="bg-muted/30 flex items-center justify-between border-b p-4">
+            <div className="bg-muted/30 flex flex-shrink-0 items-center justify-between border-b p-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg font-semibold">Diagnostic Report</h2>
@@ -107,106 +141,108 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
               </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 space-y-6 overflow-y-auto p-6">
-              {/* Main Content - Diagnostic Report */}
-              {mainContent && (
-                <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
-                  <div
-                    dangerouslySetInnerHTML={{ __html: formatMainContent(mainContent) }}
-                    className="diagnostic-content"
-                  />
-                </div>
-              )}
-
-              {/* Web Sources */}
-              {webSources.length > 0 && (
-                <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-                  <h3 className="mb-3 flex items-center text-lg font-semibold text-blue-600 dark:text-blue-400">
-                    <ExternalLink className="mr-2 h-5 w-5" />
-                    Web Sources
-                  </h3>
-                  <div className="space-y-3">
-                    {webSources.map((source: { title: string; url: string }, index: number) => (
-                      <div key={index} className="border-l-2 border-blue-300 pl-3">
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block font-medium text-blue-600 underline transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          {source.title}
-                        </a>
-                        <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                          {source.url}
-                        </p>
-                      </div>
-                    ))}
+            {/* Content - Made scrollable */}
+            <div className="diagnostic-scroll flex-1 overflow-y-auto">
+              <div className="space-y-6 p-6">
+                {/* Main Content - Diagnostic Report */}
+                {mainContent && (
+                  <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
+                    <div
+                      dangerouslySetInnerHTML={{ __html: formatMainContent(mainContent) }}
+                      className="diagnostic-content"
+                    />
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* YouTube Videos */}
-              {youtubeVideos.length > 0 && (
-                <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-                  <h3 className="mb-3 flex items-center text-lg font-semibold text-red-600 dark:text-red-400">
-                    <Play className="mr-2 h-5 w-5" />
-                    Diagnostic Videos
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {youtubeVideos.map(
-                      (
-                        video: {
-                          title: string;
-                          url: string;
-                          thumbnail?: string;
-                          video_id?: string;
-                        },
-                        index: number
-                      ) => (
-                        <div
-                          key={index}
-                          className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-                        >
+                {/* Web Sources */}
+                {webSources.length > 0 && (
+                  <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                    <h3 className="mb-3 flex items-center text-lg font-semibold text-blue-600 dark:text-blue-400">
+                      <ExternalLink className="mr-2 h-5 w-5" />
+                      Web Sources
+                    </h3>
+                    <div className="space-y-3">
+                      {webSources.map((source: { title: string; url: string }, index: number) => (
+                        <div key={index} className="border-l-2 border-blue-300 pl-3">
                           <a
-                            href={video.url}
+                            href={source.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group block"
+                            className="block font-medium text-blue-600 underline transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
-                            <div className="relative aspect-video bg-gray-100 dark:bg-gray-700">
-                              <img
-                                src={
-                                  video.thumbnail ||
-                                  (video.video_id
-                                    ? `https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`
-                                    : 'https://img.youtube.com/vi/default/mqdefault.jpg')
-                                }
-                                alt={video.title}
-                                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = 'https://img.youtube.com/vi/default/default.jpg';
-                                }}
-                              />
-                              <div className="bg-opacity-20 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black transition-all">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform group-hover:scale-110">
-                                  <Play className="ml-1 h-6 w-6 text-white" fill="currentColor" />
+                            {source.title}
+                          </a>
+                          <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
+                            {source.url}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* YouTube Videos */}
+                {youtubeVideos.length > 0 && (
+                  <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
+                    <h3 className="mb-3 flex items-center text-lg font-semibold text-red-600 dark:text-red-400">
+                      <Play className="mr-2 h-5 w-5" />
+                      Diagnostic Videos
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {youtubeVideos.map(
+                        (
+                          video: {
+                            title: string;
+                            url: string;
+                            thumbnail?: string;
+                            video_id?: string;
+                          },
+                          index: number
+                        ) => (
+                          <div
+                            key={index}
+                            className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                          >
+                            <a
+                              href={video.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group block"
+                            >
+                              <div className="relative aspect-video bg-gray-100 dark:bg-gray-700">
+                                <img
+                                  src={
+                                    video.thumbnail ||
+                                    (video.video_id
+                                      ? `https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`
+                                      : 'https://img.youtube.com/vi/default/mqdefault.jpg')
+                                  }
+                                  alt={video.title}
+                                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = 'https://img.youtube.com/vi/default/default.jpg';
+                                  }}
+                                />
+                                <div className="bg-opacity-20 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black transition-all">
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform group-hover:scale-110">
+                                    <Play className="ml-1 h-6 w-6 text-white" fill="currentColor" />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="p-3">
-                              <p className="line-clamp-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-red-600 dark:text-gray-100 dark:group-hover:text-red-400">
-                                {video.title}
-                              </p>
-                            </div>
-                          </a>
-                        </div>
-                      )
-                    )}
+                              <div className="p-3">
+                                <p className="line-clamp-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-red-600 dark:text-gray-100 dark:group-hover:text-red-400">
+                                  {video.title}
+                                </p>
+                              </div>
+                            </a>
+                          </div>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </motion.div>
         </>
