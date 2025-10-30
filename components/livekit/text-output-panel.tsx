@@ -22,15 +22,31 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   const parseStructured = (raw: string) => {
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.content) {
+      // Handle the new structured format with text_output
+      if (parsed && parsed.content && typeof parsed.content === 'string') {
         return {
-          mainContent: parsed.content as string,
+          mainContent: parsed.content,
           webSources: Array.isArray(parsed.web_sources) ? parsed.web_sources : [],
           youtubeVideos: Array.isArray(parsed.youtube_videos) ? parsed.youtube_videos : [],
           structured: true,
         };
       }
-    } catch (_) {}
+      // Handle legacy format
+      if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
+        return {
+          mainContent: parsed.text_output.content,
+          webSources: Array.isArray(parsed.text_output.web_sources)
+            ? parsed.text_output.web_sources
+            : [],
+          youtubeVideos: Array.isArray(parsed.text_output.youtube_videos)
+            ? parsed.text_output.youtube_videos
+            : [],
+          structured: true,
+        };
+      }
+    } catch {
+      // Ignore parsing errors
+    }
     return null;
   };
 
@@ -61,14 +77,9 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
           /^• (.+)$/gm,
           '<div class="flex items-start mb-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded"><span class="text-blue-500 mr-3 mt-1 text-lg">•</span><span class="text-gray-800 dark:text-gray-200 leading-relaxed">$1</span></div>'
         )
-        // Convert URLs to clickable links (improved regex for better URL detection)
+        // Convert YouTube URLs to clickable thumbnails with special styling (do this before general URL conversion)
         .replace(
-          /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)/gi,
-          '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all">$1</a>'
-        )
-        // Convert YouTube URLs to clickable thumbnails with special styling
-        .replace(
-          /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/gi,
+          /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)(?:\S*)/gi,
           (match, videoId) => {
             return `<div class="my-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
               <a href="${match}" target="_blank" rel="noopener noreferrer" class="block group">
@@ -86,7 +97,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                   </div>
                   <div class="min-w-0 flex-1">
                     <p class="text-sm font-medium text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors">
-                      Watch on YouTube
+                      🎥 Watch Diagnostic Video
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${match}</p>
                   </div>
@@ -94,6 +105,11 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
               </a>
             </div>`;
           }
+        )
+        // Convert general URLs to clickable links (enhanced regex for better URL detection)
+        .replace(
+          /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.-])*)?(?:\#(?:[\w.-])*)?)/gi,
+          '<a href="$1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all"><svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>$1</a>'
         )
         // Convert line breaks
         .replace(/\n\n/g, '<div class="my-4"></div>')
