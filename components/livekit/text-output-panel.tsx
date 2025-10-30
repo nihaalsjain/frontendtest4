@@ -60,7 +60,17 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
 
   // Format main content with better structure for diagnostic reports
   const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {
-    let formattedContent = content
+    // Content should already be properly decoded from backend, but handle any remaining issues
+    let decodedContent = content;
+
+    // Handle any remaining escaped sequences (fallback)
+    decodedContent = decodedContent
+      .replace(/\\n/g, '\n')
+      .replace(/\\u2022/g, '•')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
+
+    let formattedContent = decodedContent
       // Format section headers (Category, Potential Root Causes, etc.)
       .replace(
         /\*\*([^*]+):\*\*/g,
@@ -247,16 +257,23 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                               <div className="relative aspect-video bg-gray-100 dark:bg-gray-700">
                                 <img
                                   src={
-                                    video.thumbnail ||
-                                    (video.video_id
-                                      ? `https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`
-                                      : 'https://img.youtube.com/vi/default/mqdefault.jpg')
+                                    video.thumbnail &&
+                                    !video.thumbnail.includes('default/default.jpg')
+                                      ? video.thumbnail
+                                      : video.video_id
+                                        ? `https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`
+                                        : 'https://img.youtube.com/vi/default/mqdefault.jpg'
                                   }
                                   alt={video.title}
                                   className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.src = 'https://img.youtube.com/vi/default/default.jpg';
+                                    // Try alternative thumbnail URLs if the primary fails
+                                    if (video.video_id && !target.src.includes('hqdefault')) {
+                                      target.src = `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`;
+                                    } else {
+                                      target.src = 'https://img.youtube.com/vi/default/default.jpg';
+                                    }
                                   }}
                                 />
                                 <div className="bg-opacity-20 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black transition-all">
