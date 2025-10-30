@@ -59,24 +59,27 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   const { mainContent, webSources, youtubeVideos } = parsed;
 
   // Format main content with better structure for diagnostic reports
-  const formatMainContent = (content: string) => {
-    return (
-      content
-        // Format section headers (Category, Potential Root Causes, etc.)
-        .replace(
-          /\*\*([^*]+):\*\*/g,
-          '<h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mt-6 mb-3 border-b border-blue-200 dark:border-blue-800 pb-2">$1</h3>'
-        )
-        // Format single line category descriptions
-        .replace(
-          /\*\*Category:\*\*\s*([^\n]+)/g,
-          '<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4"><strong class="text-blue-700 dark:text-blue-300">Category:</strong> <span class="text-gray-800 dark:text-gray-200">$1</span></div>'
-        )
-        // Format bullet points with better styling
-        .replace(
-          /^• (.+)$/gm,
-          '<div class="flex items-start mb-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded"><span class="text-blue-500 mr-3 mt-1 text-lg">•</span><span class="text-gray-800 dark:text-gray-200 leading-relaxed">$1</span></div>'
-        )
+  const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {
+    let formattedContent = content
+      // Format section headers (Category, Potential Root Causes, etc.)
+      .replace(
+        /\*\*([^*]+):\*\*/g,
+        '<h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mt-6 mb-3 border-b border-blue-200 dark:border-blue-800 pb-2">$1</h3>'
+      )
+      // Format single line category descriptions
+      .replace(
+        /\*\*Category:\*\*\s*([^\n]+)/g,
+        '<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4"><strong class="text-blue-700 dark:text-blue-300">Category:</strong> <span class="text-gray-800 dark:text-gray-200">$1</span></div>'
+      )
+      // Format bullet points with better styling
+      .replace(
+        /^• (.+)$/gm,
+        '<div class="flex items-start mb-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded"><span class="text-blue-500 mr-3 mt-1 text-lg">•</span><span class="text-gray-800 dark:text-gray-200 leading-relaxed">$1</span></div>'
+      );
+
+    // Only process YouTube URLs in content if we don't have structured YouTube videos
+    if (!hasStructuredVideos) {
+      formattedContent = formattedContent
         // Convert YouTube URLs to clickable thumbnails with special styling (do this before general URL conversion)
         .replace(
           /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)(?:\S*)/gi,
@@ -105,12 +108,26 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
               </a>
             </div>`;
           }
-        )
-        // Convert general URLs to clickable links (enhanced regex for better URL detection)
-        .replace(
-          /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.-])*)?(?:\#(?:[\w.-])*)?)/gi,
-          '<a href="$1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all"><svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>$1</a>'
-        )
+        );
+    }
+
+    // Always process regular URLs (but skip YouTube URLs if we have structured videos)
+    if (hasStructuredVideos) {
+      // Skip YouTube URLs when processing regular URLs
+      formattedContent = formattedContent.replace(
+        /(https?:\/\/(?!(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/))(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.-])*)?(?:\#(?:[\w.-])*)?)/gi,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all"><svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>$1</a>'
+      );
+    } else {
+      // Process all URLs normally
+      formattedContent = formattedContent.replace(
+        /(https?:\/\/(?:[-\w.])+(?:\:[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.-])*)?(?:\#(?:[\w.-])*)?)/gi,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium break-all"><svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>$1</a>'
+      );
+    }
+
+    return (
+      formattedContent
         // Convert line breaks
         .replace(/\n\n/g, '<div class="my-4"></div>')
         .replace(/\n/g, '<br>')
@@ -164,7 +181,9 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                 {mainContent && (
                   <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
                     <div
-                      dangerouslySetInnerHTML={{ __html: formatMainContent(mainContent) }}
+                      dangerouslySetInnerHTML={{
+                        __html: formatMainContent(mainContent, youtubeVideos.length > 0),
+                      }}
                       className="diagnostic-content"
                     />
                   </div>
