@@ -54,7 +54,9 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
     // Get the latest diagnostic structured content (TEXT_ONLY: prefix aware).
     const getLatestTextContent = (): string => {
       // Collect assistant (remote) messages only
-      const assistantMessages = messages.filter((m) => !m.from?.isLocal && typeof m.message === 'string');
+      const assistantMessages = messages.filter(
+        (m) => !m.from?.isLocal && typeof m.message === 'string'
+      );
       if (!assistantMessages.length) return '';
 
       // 1. Prefer the most recent TEXT_ONLY: chunk (new streaming format)
@@ -99,7 +101,9 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
           if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
             return JSON.stringify(parsed.text_output);
           }
-        } catch {/* ignore */}
+        } catch {
+          /* ignore */
+        }
       }
 
       return '';
@@ -116,17 +120,19 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
         if (typeof m.message === 'string') {
           // New streaming: voice summary already isolated (no change needed)
           // Backward compatibility: collapse VOICE|||TEXT to voice portion
-            const match = m.message.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:[\s\S]*$/);
-            if (match) {
-              return { ...m, message: match[1].trim() };
-            }
+          const match = m.message.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:[\s\S]*$/);
+          if (match) {
+            return { ...m, message: match[1].trim() };
+          }
           // Legacy full JSON structure
           try {
             const parsed = JSON.parse(m.message);
             if (parsed && parsed.voice_output && parsed.text_output) {
               return { ...m, message: parsed.voice_output };
             }
-          } catch {/* ignore */}
+          } catch {
+            /* ignore */
+          }
         }
         return m;
       });
