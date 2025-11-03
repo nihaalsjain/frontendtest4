@@ -51,57 +51,85 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
       await send(message);
     }
 
-    // Get the latest text content for the text output panel
+    // Get the latest diagnostic structured content (TEXT_ONLY: prefix aware).
     const getLatestTextContent = (): string => {
-      const assistantMessages = messages.filter((msg) => !msg.from?.isLocal);
-      if (assistantMessages.length === 0) return '';
-      const lastMessage = assistantMessages[assistantMessages.length - 1];
-      const raw = lastMessage.message;
-      if (typeof raw !== 'string') return '';
+      // Collect assistant (remote) messages only
+      const assistantMessages = messages.filter((m) => !m.from?.isLocal && typeof m.message === 'string');
+      if (!assistantMessages.length) return '';
 
-      // Pattern VOICE:...|||TEXT:...
-      const voiceTextMatch = raw.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:([\s\S]*)$/);
-      if (voiceTextMatch) {
-        const textSegment = voiceTextMatch[2];
-        // textSegment itself may be JSON of text_output
-        try {
-          const parsedText = JSON.parse(textSegment);
-          if (parsedText && typeof parsedText.content === 'string') {
-            return JSON.stringify(parsedText); // normalized
+      // 1. Prefer the most recent TEXT_ONLY: chunk (new streaming format)
+      for (let i = assistantMessages.length - 1; i >= 0; i--) {
+        const raw = assistantMessages[i].message as string;
+        if (raw.startsWith('TEXT_ONLY:')) {
+          const payload = raw.slice('TEXT_ONLY:'.length).trim();
+          try {
+            const parsed = JSON.parse(payload);
+            // New format already is text_output; ensure content exists
+            if (parsed && typeof parsed.content === 'string') {
+              return JSON.stringify(parsed);
+            }
+          } catch {
+            return payload; // fallback raw diagnostic text
           }
-        } catch {
-          return textSegment; // plain fallback
         }
       }
 
-      // Direct structured JSON message
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
-          return JSON.stringify(parsed.text_output);
+      // 2. Backward compatibility: VOICE:...|||TEXT:{json}
+      for (let i = assistantMessages.length - 1; i >= 0; i--) {
+        const raw = assistantMessages[i].message as string;
+        const voiceTextMatch = raw.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:([\s\S]*)$/);
+        if (voiceTextMatch) {
+          const textSegment = voiceTextMatch[2];
+          try {
+            const parsedText = JSON.parse(textSegment);
+            if (parsedText && typeof parsedText.content === 'string') {
+              return JSON.stringify(parsedText);
+            }
+          } catch {
+            return textSegment;
+          }
         }
-      } catch {}
-      return raw;
+      }
+
+      // 3. Legacy direct structured JSON with text_output wrapper
+      for (let i = assistantMessages.length - 1; i >= 0; i--) {
+        const raw = assistantMessages[i].message as string;
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
+            return JSON.stringify(parsed.text_output);
+          }
+        } catch {/* ignore */}
+      }
+
+      return '';
     };
 
     // Derive chat display messages (show voice_output if structured JSON)
-    const displayMessages = messages.map((m) => {
-      if (typeof m.message === 'string') {
-        // VOICE|||TEXT pattern
-        const match = m.message.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:[\s\S]*$/);
-        if (match) {
-          return { ...m, message: match[1].trim() };
+    const displayMessages = messages
+      .filter((m) => {
+        // Filter out raw diagnostic chunks (TEXT_ONLY:) from chat display
+        if (typeof m.message === 'string' && m.message.startsWith('TEXT_ONLY:')) return false;
+        return true;
+      })
+      .map((m) => {
+        if (typeof m.message === 'string') {
+          // New streaming: voice summary already isolated (no change needed)
+          // Backward compatibility: collapse VOICE|||TEXT to voice portion
+            const match = m.message.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:[\s\S]*$/);
+            if (match) {
+              return { ...m, message: match[1].trim() };
+            }
+          // Legacy full JSON structure
+          try {
+            const parsed = JSON.parse(m.message);
+            if (parsed && parsed.voice_output && parsed.text_output) {
+              return { ...m, message: parsed.voice_output };
+            }
+          } catch {/* ignore */}
         }
-        // Raw JSON
-        try {
-          const parsed = JSON.parse(m.message);
-          if (parsed && parsed.voice_output && parsed.text_output) {
-            return { ...m, message: parsed.voice_output };
-          }
-        } catch {}
-      }
-      return m;
-    });
+        return m;
+      });
 
     useEffect(() => {
       if (sessionStarted) {
