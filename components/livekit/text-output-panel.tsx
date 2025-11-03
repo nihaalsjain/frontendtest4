@@ -56,7 +56,55 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   };
 
   const parsed = parseStructured(textContent) || legacyParse(textContent);
-  const { mainContent, webSources, youtubeVideos } = parsed;
+  // Sanitize youtube video objects (remove stray HTML fragments)
+  interface RawVideo {
+    title?: string;
+    url?: string;
+    thumbnail?: string;
+    thumbnail_hq?: string;
+    thumbnail_max?: string;
+    video_id?: string;
+    [key: string]: unknown;
+  }
+
+  const sanitizeVideos = (
+    arr: unknown[]
+  ): { title: string; url: string; thumbnail?: string; video_id?: string }[] => {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((v): v is RawVideo => !!v && typeof v === 'object')
+      .map((v) => {
+        const cleanString = (s: unknown): string => {
+          if (typeof s !== 'string') return '';
+          const noTags = s
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          const urlMatch = noTags.match(
+            /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=[a-zA-Z0-9_-]+|youtu\.be\/[a-zA-Z0-9_-]+)/
+          );
+          return urlMatch ? urlMatch[0] : noTags;
+        };
+        const url = cleanString(v.url);
+        const title = cleanString(v.title || 'Diagnostic Video');
+        const thumb = cleanString(v.thumbnail || v.thumbnail_hq || v.thumbnail_max || '');
+        const video_id =
+          v.video_id ||
+          (url.split('v=')[1] || url.split('/').pop() || '').replace(/[^a-zA-Z0-9_-]/g, '');
+        const normalizedThumb =
+          thumb && !thumb.includes('default/default.jpg')
+            ? thumb
+            : video_id
+              ? `https://img.youtube.com/vi/${video_id}/mqdefault.jpg`
+              : 'https://img.youtube.com/vi/default/mqdefault.jpg';
+        return { title, url, thumbnail: normalizedThumb, video_id };
+      });
+  };
+
+  const { mainContent, webSources, youtubeVideos } = {
+    ...parsed,
+    youtubeVideos: sanitizeVideos(parsed.youtubeVideos),
+  };
 
   // Format main content with better structure for diagnostic reports
   const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {
@@ -254,7 +302,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                               rel="noopener noreferrer"
                               className="group block"
                             >
-                              <div className="relative aspect-video bg-gray-100 dark:bg-gray-700">
+                              <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-700">
                                 <img
                                   src={
                                     video.thumbnail &&
@@ -276,8 +324,8 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                                     }
                                   }}
                                 />
-                                <div className="bg-opacity-20 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black transition-all">
-                                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform group-hover:scale-110">
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg">
                                     <Play className="ml-1 h-6 w-6 text-white" fill="currentColor" />
                                   </div>
                                 </div>
