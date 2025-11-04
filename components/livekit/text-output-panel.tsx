@@ -56,6 +56,15 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   };
 
   const parsed = parseStructured(textContent) || legacyParse(textContent);
+  
+  // Debug: Log what we received from backend
+  console.log('TextOutputPanel received data:', {
+    hasContent: !!parsed.mainContent,
+    webSourcesCount: parsed.webSources.length,
+    rawYoutubeVideos: parsed.youtubeVideos,
+    structured: parsed.structured,
+  });
+  
   // Sanitize youtube video objects (remove stray HTML fragments)
   interface RawVideo {
     title?: string;
@@ -71,7 +80,8 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
     arr: unknown[]
   ): { title: string; url: string; thumbnail?: string; video_id?: string }[] => {
     if (!Array.isArray(arr)) return [];
-    return arr
+    
+    const cleanedVideos = arr
       .filter((v): v is RawVideo => !!v && typeof v === 'object')
       .map((v) => {
         const cleanString = (s: unknown): string => {
@@ -95,8 +105,12 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
           return urlMatch ? urlMatch[0] : cleaned;
         };
 
-        const url = cleanString(v.url);
-        const title = cleanString(v.title || 'Diagnostic Video');
+        const rawUrl = v.url;
+        const rawTitle = v.title;
+        
+        // Clean URL and title
+        const url = cleanString(rawUrl);
+        const title = cleanString(rawTitle || 'Diagnostic Video');
 
         // Handle thumbnail - prefer video_id to construct thumbnail URL
         let video_id = v.video_id || '';
@@ -118,7 +132,17 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
           video_id,
         };
       })
-      .filter((v) => v.url && v.video_id); // Only keep valid videos with URL and ID
+      .filter((v) => {
+        // Only filter out completely invalid entries
+        const isValid = v.url && v.video_id && v.url.includes('youtube');
+        if (!isValid) {
+          console.warn('Filtered out invalid YouTube video:', v);
+        }
+        return isValid;
+      });
+    
+    console.log('Sanitized YouTube videos:', cleanedVideos);
+    return cleanedVideos;
   };
 
   const { mainContent, webSources, youtubeVideos } = {
