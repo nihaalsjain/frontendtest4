@@ -76,29 +76,49 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
       .map((v) => {
         const cleanString = (s: unknown): string => {
           if (typeof s !== 'string') return '';
-          const noTags = s
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/\s+/g, ' ')
+          
+          // First, aggressively remove ALL HTML tags and attributes
+          let cleaned = s
+            .replace(/<[^>]+>/g, ' ')  // Remove HTML tags
+            .replace(/target="_blank"/g, '')  // Remove target attributes
+            .replace(/rel="[^"]*"/g, '')  // Remove rel attributes
+            .replace(/class="[^"]*"/g, '')  // Remove class attributes
+            .replace(/alt="[^"]*"/g, '')  // Remove alt attributes
+            .replace(/🎥\s*Watch Diagnostic Video/g, '')  // Remove emoji text
+            .replace(/\s+/g, ' ')  // Collapse whitespace
             .trim();
-          const urlMatch = noTags.match(
+          
+          // Extract YouTube URL if present
+          const urlMatch = cleaned.match(
             /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=[a-zA-Z0-9_-]+|youtu\.be\/[a-zA-Z0-9_-]+)/
           );
-          return urlMatch ? urlMatch[0] : noTags;
+          return urlMatch ? urlMatch[0] : cleaned;
         };
+        
         const url = cleanString(v.url);
         const title = cleanString(v.title || 'Diagnostic Video');
-        const thumb = cleanString(v.thumbnail || v.thumbnail_hq || v.thumbnail_max || '');
-        const video_id =
-          v.video_id ||
-          (url.split('v=')[1] || url.split('/').pop() || '').replace(/[^a-zA-Z0-9_-]/g, '');
-        const normalizedThumb =
-          thumb && !thumb.includes('default/default.jpg')
-            ? thumb
-            : video_id
-              ? `https://img.youtube.com/vi/${video_id}/mqdefault.jpg`
-              : 'https://img.youtube.com/vi/default/mqdefault.jpg';
-        return { title, url, thumbnail: normalizedThumb, video_id };
-      });
+        
+        // Handle thumbnail - prefer video_id to construct thumbnail URL
+        let video_id = v.video_id || '';
+        if (!video_id && url) {
+          // Extract video_id from URL
+          const idMatch = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+          video_id = idMatch ? idMatch[1] : '';
+        }
+        
+        // Always construct thumbnail from video_id for reliability
+        const normalizedThumb = video_id
+          ? `https://img.youtube.com/vi/${video_id}/mqdefault.jpg`
+          : 'https://img.youtube.com/vi/default/mqdefault.jpg';
+        
+        return { 
+          title: title || 'Diagnostic Video', 
+          url: url || '', 
+          thumbnail: normalizedThumb, 
+          video_id 
+        };
+      })
+      .filter(v => v.url && v.video_id);  // Only keep valid videos with URL and ID
   };
 
   const { mainContent, webSources, youtubeVideos } = {
