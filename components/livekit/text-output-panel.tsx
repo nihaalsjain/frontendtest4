@@ -166,14 +166,16 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   console.log('6. Final youtubeVideos prop that will be rendered:', youtubeVideos);
   console.log('7. Will YouTube section render?', youtubeVideos.length > 0);
   console.log('8. YouTube Videos Details:');
-  youtubeVideos.forEach((v: any, idx: number) => {
-    console.log(`   Video ${idx}:`, {
-      url: v.url,
-      video_id: v.video_id,
-      title: v.title?.substring(0, 50),
-      thumbnail: v.thumbnail?.substring(0, 80),
-    });
-  });
+  youtubeVideos.forEach(
+    (v: { url: string; video_id?: string; title: string; thumbnail?: string }, idx: number) => {
+      console.log(`   Video ${idx}:`, {
+        url: v.url,
+        video_id: v.video_id,
+        title: v.title?.substring(0, 50),
+        thumbnail: v.thumbnail?.substring(0, 80),
+      });
+    }
+  );
   console.log('9. MainContent preview (first 500 chars):', mainContent?.substring(0, 500));
   console.log(
     '10. Does mainContent include "youtube"?',
