@@ -56,7 +56,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   };
 
   const parsed = parseStructured(textContent) || legacyParse(textContent);
-  
+
   // Debug: Log what we received from backend
   console.log('TextOutputPanel received data:', {
     hasContent: !!parsed.mainContent,
@@ -64,7 +64,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
     rawYoutubeVideos: parsed.youtubeVideos,
     structured: parsed.structured,
   });
-  
+
   // Sanitize youtube video objects (remove stray HTML fragments)
   interface RawVideo {
     title?: string;
@@ -80,7 +80,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
     arr: unknown[]
   ): { title: string; url: string; thumbnail?: string; video_id?: string }[] => {
     if (!Array.isArray(arr)) return [];
-    
+
     const cleanedVideos = arr
       .filter((v): v is RawVideo => !!v && typeof v === 'object')
       .map((v) => {
@@ -107,7 +107,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
 
         const rawUrl = v.url;
         const rawTitle = v.title;
-        
+
         // Clean URL and title
         const url = cleanString(rawUrl);
         const title = cleanString(rawTitle || 'Diagnostic Video');
@@ -140,7 +140,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
         }
         return isValid;
       });
-    
+
     console.log('Sanitized YouTube videos:', cleanedVideos);
     return cleanedVideos;
   };
