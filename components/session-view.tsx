@@ -16,7 +16,6 @@ import { MediaTiles } from '@/components/livekit/media-tiles';
 import { TextOutputPanel } from '@/components/livekit/text-output-panel';
 import useChatAndTranscription from '@/hooks/useChatAndTranscription';
 import { useDebugMode } from '@/hooks/useDebug';
-import { useDiagnosticWebSocket } from '@/hooks/useDiagnosticWebSocket';
 import type { AppConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -42,106 +41,26 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
     const [textOutputOpen, setTextOutputOpen] = useState(false);
     const { messages, send } = useChatAndTranscription();
     const room = useRoomContext();
-    const [diagnosticTextPayload, setDiagnosticTextPayload] = useState<string>('');
 
     useDebugMode({
       // FIX: NODE_ENV (not NODE_END)
       enabled: process.env.NODE_ENV !== 'production',
     });
 
-    /**
-     * Listen for diagnostic text via WebSocket (primary method).
-     * Backend sends diagnostic text through a separate WebSocket message channel
-     * with type: "diagnostic:text"
-     */
-    const handleDiagnosticTextFromWebSocket = useCallback((payload: unknown) => {
-      try {
-        setDiagnosticTextPayload(JSON.stringify(payload));
-        console.log('✅ Diagnostic text received via WebSocket', payload);
-      } catch (error) {
-        console.error('Error processing WebSocket diagnostic text:', error);
-      }
-    }, []);
-
-    // Initialize WebSocket listener for diagnostic text
-    useDiagnosticWebSocket(handleDiagnosticTextFromWebSocket);
-
-    /**
-     * Fallback: Retrieve diagnostic text payload from backend LLM adapter.
-     * This is called if WebSocket method doesn't receive data.
-     * Ensures graceful degradation.
-     */
-    const retrieveDiagnosticTextPayload = useCallback(async () => {
-      try {
-        // Only attempt if we don't already have text from WebSocket
-        if (diagnosticTextPayload) {
-          console.log('✅ Diagnostic text already received via WebSocket');
-          return;
-        }
-
-        // Access LLM adapter via global context as fallback
-        if (typeof window !== 'undefined') {
-          const windowWithAdapter = window as unknown as {
-            __llmAdapter?: { get_diagnostic_text_payload?: () => string | null };
-          };
-          const adapter = windowWithAdapter.__llmAdapter;
-          if (adapter?.get_diagnostic_text_payload) {
-            const payload = adapter.get_diagnostic_text_payload();
-            if (payload) {
-              try {
-                const parsed = JSON.parse(payload);
-                setDiagnosticTextPayload(JSON.stringify(parsed));
-                console.log('📋 Retrieved diagnostic text payload from backend (fallback)', parsed);
-              } catch (e) {
-                console.error('Failed to parse diagnostic payload:', e);
-                setDiagnosticTextPayload(payload);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error retrieving diagnostic text payload (fallback):', error);
-      }
-    }, [diagnosticTextPayload]);
-
-    /**
-     * Watch for new messages and attempt to retrieve diagnostic text when agent responds.
-     * This is a fallback for when WebSocket doesn't deliver the text.
-     */
-    useEffect(() => {
-      if (messages.length > 0) {
-        const latestMessage = messages[messages.length - 1];
-        // If latest message is from agent (not local), try to fetch diagnostic text as fallback
-        if (!latestMessage.from?.isLocal) {
-          // Small delay to ensure backend has processed and stored the text
-          const timer = setTimeout(() => {
-            retrieveDiagnosticTextPayload();
-          }, 500);
-          return () => clearTimeout(timer);
-        }
-      }
-    }, [messages, retrieveDiagnosticTextPayload]);
-
     async function handleSendMessage(message: string) {
       await send(message);
     }
 
-    // Get the latest diagnostic structured content
-    // Priority: 1) Retrieved from backend payload, 2) TEXT_ONLY chunks, 3) Legacy patterns
+    // Get the latest diagnostic structured content from messages
+    // Priority: 1) TEXT_ONLY chunks, 2) VOICE|||TEXT format, 3) Legacy full JSON
     const getLatestTextContent = (): string => {
-      // 1. Prefer the backend-retrieved diagnostic text (most reliable)
-      if (diagnosticTextPayload) {
-        console.log('📋 Using backend-retrieved diagnostic payload');
-        return diagnosticTextPayload;
-      }
-
-      // 2. Collect assistant (remote) messages only for fallback
+      // Collect assistant (remote) messages only
       const assistantMessages = messages.filter(
         (m) => !m.from?.isLocal && typeof m.message === 'string'
       );
       if (!assistantMessages.length) return '';
 
-      // 3. Fallback: Check for TEXT_ONLY: chunk in stream (new format backup)
+      // 1. Check for TEXT_ONLY: chunk in stream (new format)
       for (let i = assistantMessages.length - 1; i >= 0; i--) {
         const raw = assistantMessages[i].message as string;
         if (raw.startsWith('TEXT_ONLY:')) {
@@ -159,7 +78,7 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
         }
       }
 
-      // 4. Backward compatibility: VOICE:...|||TEXT:{json}
+      // 2. Backward compatibility: VOICE:...|||TEXT:{json}
       for (let i = assistantMessages.length - 1; i >= 0; i--) {
         const raw = assistantMessages[i].message as string;
         const voiceTextMatch = raw.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:([\s\S]*)$/);
@@ -177,7 +96,7 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
         }
       }
 
-      // 5. Legacy direct structured JSON with text_output wrapper
+      // 3. Legacy direct structured JSON with text_output wrapper
       for (let i = assistantMessages.length - 1; i >= 0; i--) {
         const raw = assistantMessages[i].message as string;
         try {

@@ -53,13 +53,3 @@ export interface StructuredMessage {
   };
   html_output: string;
 }
-
-/**
- * Interface for DiagnosticLLMAdapter backend service
- * Provides diagnostic text payload retrieval for frontend rendering
- */
-export interface DiagnosticLLMAdapterInterface {
-  get_diagnostic_text_payload(): string | null;
-  chat(ctx: Record<string, unknown>, tools?: Record<string, unknown>): Promise<unknown>;
-  aclose(): Promise<void>;
-}
