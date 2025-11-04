@@ -78,7 +78,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
           if (typeof s !== 'string') return '';
 
           // First, aggressively remove ALL HTML tags and attributes
-          let cleaned = s
+          const cleaned = s
             .replace(/<[^>]+>/g, ' ') // Remove HTML tags
             .replace(/target="_blank"/g, '') // Remove target attributes
             .replace(/rel="[^"]*"/g, '') // Remove rel attributes
@@ -323,6 +323,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                               className="group block"
                             >
                               <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-700">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={
                                     video.thumbnail &&
