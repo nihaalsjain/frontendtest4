@@ -68,7 +68,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
     structured: parsed.structured,
   });
   console.log('3. Raw youtube_videos array:', parsed.youtubeVideos);
-  
+
   // Sanitize youtube video objects (remove stray HTML fragments)
   interface RawVideo {
     title?: string;
