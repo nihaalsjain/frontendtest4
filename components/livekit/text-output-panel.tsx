@@ -58,13 +58,17 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   const parsed = parseStructured(textContent) || legacyParse(textContent);
 
   // Debug: Log what we received from backend
-  console.log('TextOutputPanel received data:', {
+  console.log('=== TextOutputPanel Debug Start ===');
+  console.log('1. Raw textContent length:', textContent?.length);
+  console.log('2. Parsed data:', {
     hasContent: !!parsed.mainContent,
-    webSourcesCount: parsed.webSources.length,
-    rawYoutubeVideos: parsed.youtubeVideos,
+    contentLength: parsed.mainContent?.length,
+    webSourcesCount: parsed.webSources?.length,
+    youtubeVideosCount: parsed.youtubeVideos?.length,
     structured: parsed.structured,
   });
-
+  console.log('3. Raw youtube_videos array:', parsed.youtubeVideos);
+  
   // Sanitize youtube video objects (remove stray HTML fragments)
   interface RawVideo {
     title?: string;
@@ -136,12 +140,21 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
         // Only filter out completely invalid entries
         const isValid = v.url && v.video_id && v.url.includes('youtube');
         if (!isValid) {
-          console.warn('Filtered out invalid YouTube video:', v);
+          console.warn('❌ Filtered out invalid YouTube video:', {
+            url: v.url,
+            video_id: v.video_id,
+            title: v.title,
+            hasUrl: !!v.url,
+            hasVideoId: !!v.video_id,
+            includesYoutube: v.url?.includes('youtube'),
+          });
         }
         return isValid;
       });
 
-    console.log('Sanitized YouTube videos:', cleanedVideos);
+    console.log('4. After sanitization, cleaned videos count:', cleanedVideos.length);
+    console.log('5. Cleaned videos array:', cleanedVideos);
+    console.log('=== TextOutputPanel Debug End ===');
     return cleanedVideos;
   };
 
@@ -149,6 +162,9 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
     ...parsed,
     youtubeVideos: sanitizeVideos(parsed.youtubeVideos),
   };
+
+  console.log('6. Final youtubeVideos prop that will be rendered:', youtubeVideos);
+  console.log('7. Will YouTube section render?', youtubeVideos.length > 0);
 
   // Format main content with better structure for diagnostic reports
   const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {
@@ -323,7 +339,7 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                   <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
                     <h3 className="mb-3 flex items-center text-lg font-semibold text-red-600 dark:text-red-400">
                       <Play className="mr-2 h-5 w-5" />
-                      Diagnostic Videos
+                      Diagnostic Videos ({youtubeVideos.length})
                     </h3>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {youtubeVideos.map(
