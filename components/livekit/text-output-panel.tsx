@@ -165,6 +165,29 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
 
   console.log('6. Final youtubeVideos prop that will be rendered:', youtubeVideos);
   console.log('7. Will YouTube section render?', youtubeVideos.length > 0);
+  console.log('8. YouTube Videos Details:');
+  youtubeVideos.forEach((v: any, idx: number) => {
+    console.log(`   Video ${idx}:`, {
+      url: v.url,
+      video_id: v.video_id,
+      title: v.title?.substring(0, 50),
+      thumbnail: v.thumbnail?.substring(0, 80),
+    });
+  });
+  console.log('9. MainContent preview (first 500 chars):', mainContent?.substring(0, 500));
+  console.log(
+    '10. Does mainContent include "youtube"?',
+    mainContent?.toLowerCase().includes('youtube')
+  );
+
+  // SAFETY: Remove any raw JSON representations of youtube_videos from mainContent
+  const cleanMainContent =
+    mainContent
+      ?.replace(/\{"url":\s*"https?:\/\/[^"]+youtube[^"]+",\s*"title":[^}]+\}/gi, '')
+      .trim() || mainContent;
+
+  console.log('11. About to render - youtubeVideos count:', youtubeVideos.length);
+  console.log('12. Conditional check will pass?', youtubeVideos.length > 0);
 
   // Format main content with better structure for diagnostic reports
   const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {
@@ -296,11 +319,11 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
             <div className="diagnostic-scroll flex-1 overflow-y-auto">
               <div className="space-y-6 p-6">
                 {/* Main Content - Diagnostic Report */}
-                {mainContent && (
+                {cleanMainContent && (
                   <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: formatMainContent(mainContent, youtubeVideos.length > 0),
+                        __html: formatMainContent(cleanMainContent, youtubeVideos.length > 0),
                       }}
                       className="diagnostic-content"
                     />
@@ -361,6 +384,14 @@ export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
                               target="_blank"
                               rel="noopener noreferrer"
                               className="group block"
+                              onClick={(e) => {
+                                // Validate URL before opening
+                                if (!video.url || !video.url.includes('youtube')) {
+                                  e.preventDefault();
+                                  console.error('Invalid YouTube URL:', video.url);
+                                  alert('Invalid YouTube URL. Please check the video link.');
+                                }
+                              }}
                             >
                               <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-700">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
