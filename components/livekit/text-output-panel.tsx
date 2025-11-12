@@ -3,60 +3,36 @@
 import React from 'react';
 import { ExternalLink, FileText, Play, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import type { DiagnosticData } from '@/hooks/useDiagnosticData';
 import { cn } from '@/lib/utils';
 
 interface TextOutputPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  textContent: string; // May be plain text OR JSON string containing {content, web_sources, youtube_videos}
+  diagnosticData: DiagnosticData | null; // Structured data from data channel
   className?: string;
 }
 
 export const TextOutputPanel: React.FC<TextOutputPanelProps> = ({
   isOpen,
   onClose,
-  textContent,
+  diagnosticData,
   className,
 }) => {
-  // Parse text content to extract structured information
-  const parseStructured = (raw: string) => {
-    try {
-      const parsed = JSON.parse(raw);
-      // Handle the new structured format with text_output
-      if (parsed && parsed.content && typeof parsed.content === 'string') {
-        return {
-          mainContent: parsed.content,
-          webSources: Array.isArray(parsed.web_sources) ? parsed.web_sources : [],
-          youtubeVideos: Array.isArray(parsed.youtube_videos) ? parsed.youtube_videos : [],
-          structured: true,
-        };
-      }
-      // Handle legacy format
-      if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
-        return {
-          mainContent: parsed.text_output.content,
-          webSources: Array.isArray(parsed.text_output.web_sources)
-            ? parsed.text_output.web_sources
-            : [],
-          youtubeVideos: Array.isArray(parsed.text_output.youtube_videos)
-            ? parsed.text_output.youtube_videos
-            : [],
-          structured: true,
-        };
-      }
-    } catch {
-      // Ignore parsing errors
-    }
-    return null;
+  // Parse structured diagnostic data
+  const parseStructured = () => {
+    if (!diagnosticData) return null;
+
+    return {
+      mainContent: diagnosticData.content || '',
+      webSources: diagnosticData.web_sources || [],
+      youtubeVideos: diagnosticData.youtube_videos || [],
+      structured: true,
+    };
   };
 
-  const legacyParse = (content: string) => {
-    if (!content) return { mainContent: '', webSources: [], youtubeVideos: [], structured: false };
-    return { mainContent: content, webSources: [], youtubeVideos: [], structured: false };
-  };
-
-  const parsed = parseStructured(textContent) || legacyParse(textContent);
-  const { mainContent, webSources, youtubeVideos } = parsed;
+  const parsed = parseStructured();
+  const { mainContent = '', webSources = [], youtubeVideos = [] } = parsed || {};
 
   // Format main content with better structure for diagnostic reports
   const formatMainContent = (content: string, hasStructuredVideos: boolean = false) => {

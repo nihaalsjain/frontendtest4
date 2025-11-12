@@ -16,6 +16,7 @@ import { MediaTiles } from '@/components/livekit/media-tiles';
 import { TextOutputPanel } from '@/components/livekit/text-output-panel';
 import useChatAndTranscription from '@/hooks/useChatAndTranscription';
 import { useDebugMode } from '@/hooks/useDebug';
+import { useDiagnosticData } from '@/hooks/useDiagnosticData';
 import type { AppConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +43,9 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
     const { messages, send } = useChatAndTranscription();
     const room = useRoomContext();
 
+    // Use data channel hook for diagnostic report
+    const { diagnosticReport } = useDiagnosticData();
+
     useDebugMode({
       // FIX: NODE_ENV (not NODE_END)
       enabled: process.env.NODE_ENV !== 'production',
@@ -51,55 +55,9 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
       await send(message);
     }
 
-    // Get the latest text content for the text output panel
-    const getLatestTextContent = (): string => {
-      const assistantMessages = messages.filter((msg) => !msg.from?.isLocal);
-      if (assistantMessages.length === 0) return '';
-      const lastMessage = assistantMessages[assistantMessages.length - 1];
-      const raw = lastMessage.message;
-      if (typeof raw !== 'string') return '';
-
-      // Pattern VOICE:...|||TEXT:...
-      const voiceTextMatch = raw.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:([\s\S]*)$/);
-      if (voiceTextMatch) {
-        const textSegment = voiceTextMatch[2];
-        // textSegment itself may be JSON of text_output
-        try {
-          const parsedText = JSON.parse(textSegment);
-          if (parsedText && typeof parsedText.content === 'string') {
-            return JSON.stringify(parsedText); // normalized
-          }
-        } catch {
-          return textSegment; // plain fallback
-        }
-      }
-
-      // Direct structured JSON message
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.text_output && typeof parsed.text_output.content === 'string') {
-          return JSON.stringify(parsed.text_output);
-        }
-      } catch {}
-      return raw;
-    };
-
-    // Derive chat display messages (show voice_output if structured JSON)
+    // Derive chat display messages (show only voice output, no VOICE|||TEXT parsing needed)
     const displayMessages = messages.map((m) => {
-      if (typeof m.message === 'string') {
-        // VOICE|||TEXT pattern
-        const match = m.message.match(/^VOICE:([\s\S]*?)\|\|\|TEXT:[\s\S]*$/);
-        if (match) {
-          return { ...m, message: match[1].trim() };
-        }
-        // Raw JSON
-        try {
-          const parsed = JSON.parse(m.message);
-          if (parsed && parsed.voice_output && parsed.text_output) {
-            return { ...m, message: parsed.voice_output };
-          }
-        } catch {}
-      }
+      // Messages now contain only voice_output since text_output is sent via data channel
       return m;
     });
 
@@ -229,7 +187,7 @@ export const SessionView = React.forwardRef<HTMLElement, SessionViewComponentPro
         <TextOutputPanel
           isOpen={textOutputOpen}
           onClose={() => setTextOutputOpen(false)}
-          textContent={getLatestTextContent()}
+          diagnosticData={diagnosticReport}
         />
       </main>
     );
