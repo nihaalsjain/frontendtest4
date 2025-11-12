@@ -26,27 +26,39 @@ export function App({ appConfig }: AppProps) {
   const [voiceBase, setVoiceBase] = useState<'Voice Assistant' | 'Live Assistant'>(
     'Voice Assistant'
   );
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
 
-  const handleLanguageChange = (lang: 'en' | 'kn' | 'hi' | 'ta') => {
-    setLanguage(lang);
+  const updateMetadata = () => {
     if (room.state === 'connected') {
       try {
-        room.localParticipant.setMetadata(JSON.stringify({ language: lang, voiceBase }));
+        room.localParticipant.setMetadata(JSON.stringify({ 
+          language, 
+          voiceBase, 
+          vehicle: selectedVehicle, 
+          model: selectedModel 
+        }));
       } catch (e) {
         console.warn('setMetadata failed:', e);
       }
     }
   };
 
+  const handleLanguageChange = (lang: 'en' | 'kn' | 'hi' | 'ta') => {
+    setLanguage(lang);
+    updateMetadata();
+  };
+
   const handleVoiceBaseChange = (base: 'Voice Assistant' | 'Live Assistant') => {
     setVoiceBase(base);
-    if (room.state === 'connected') {
-      try {
-        room.localParticipant.setMetadata(JSON.stringify({ language, voiceBase: base }));
-      } catch (e) {
-        console.warn('setMetadata (voiceBase) failed:', e);
-      }
-    }
+    updateMetadata();
+  };
+
+  const handleVehicleChange = (vehicle: string, model: string) => {
+    setSelectedVehicle(vehicle);
+    setSelectedModel(model);
+    updateMetadata();
+    console.log('Vehicle selected:', vehicle, 'Model selected:', model);
   };
 
   const { fetchConnectionDetails } = useConnectionDetails();
@@ -74,7 +86,7 @@ export function App({ appConfig }: AppProps) {
         room.localParticipant.setMicrophoneEnabled(true, undefined, {
           preConnectBuffer: appConfig.isPreConnectBufferEnabled,
         }),
-        fetchConnectionDetails(language, voiceBase).then(async (connectionDetails) => {
+        fetchConnectionDetails(language, voiceBase, selectedVehicle, selectedModel).then(async (connectionDetails) => {
           await room.connect(connectionDetails.serverUrl, connectionDetails.participantToken);
         }),
       ]).catch((error) => {
@@ -96,6 +108,8 @@ export function App({ appConfig }: AppProps) {
     appConfig.isPreConnectBufferEnabled,
     language,
     voiceBase,
+    selectedVehicle,
+    selectedModel,
   ]);
 
   const { startButtonText } = appConfig;
@@ -111,6 +125,9 @@ export function App({ appConfig }: AppProps) {
         onLanguageChange={handleLanguageChange}
         voiceBase={voiceBase}
         onVoiceBaseChange={handleVoiceBaseChange}
+        selectedVehicle={selectedVehicle}
+        selectedModel={selectedModel}
+        onVehicleChange={handleVehicleChange}
         initial={{ opacity: 0 }}
         animate={{ opacity: sessionStarted ? 0 : 1 }}
         transition={{
