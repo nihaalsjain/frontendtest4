@@ -1,26 +1,64 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface VehicleSelectorProps {
   disabled?: boolean;
+  show?: boolean;
   onVehicleChange?: (vehicle: string, model: string) => void;
 }
 
-export const VehicleSelector = ({ disabled = false, onVehicleChange }: VehicleSelectorProps) => {
+export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange }: VehicleSelectorProps) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isVehicleDropdownOpen, setIsVehicleDropdownOpen] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  
+  const vehicleRef = useRef<HTMLDivElement>(null);
+  const modelRef = useRef<HTMLDivElement>(null);
 
   const vehicles = [
     { name: 'Honda', models: ['Civic', 'Jazz'] },
     { name: 'Maruti', models: ['Ertiga', 'Baleno'] },
   ];
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (vehicleRef.current && !vehicleRef.current.contains(event.target as Node)) {
+        setIsVehicleDropdownOpen(false);
+      }
+      if (modelRef.current && !modelRef.current.contains(event.target as Node)) {
+        setIsModelDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const selectedVehicleData = vehicles.find(v => v.name === selectedVehicle);
   const availableModels = selectedVehicleData ? selectedVehicleData.models : [];
+
+  // Don't render if show is false
+  if (!show) {
+    return null;
+  }
+
+  const handleVehicleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsVehicleDropdownOpen(!isVehicleDropdownOpen);
+    setIsModelDropdownOpen(false); // Close model dropdown when opening vehicle dropdown
+  };
+
+  const handleModelButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsModelDropdownOpen(!isModelDropdownOpen);
+    setIsVehicleDropdownOpen(false); // Close vehicle dropdown when opening model dropdown
+  };
 
   const handleVehicleChange = (vehicle: string) => {
     setSelectedVehicle(vehicle);
@@ -46,9 +84,9 @@ export const VehicleSelector = ({ disabled = false, onVehicleChange }: VehicleSe
   return (
     <div className="flex gap-4">
       {/* Vehicle Selector */}
-      <div className="relative flex-1">
+      <div className="relative flex-1" ref={vehicleRef}>
         <button
-          onClick={() => setIsVehicleDropdownOpen(!isVehicleDropdownOpen)}
+          onClick={handleVehicleButtonClick}
           className="flex w-full items-center justify-between rounded-lg border border-white/20 bg-white/10 px-4 py-4 text-left font-medium text-gray-200 shadow-lg backdrop-blur-md transition-all duration-200 hover:bg-white/15"
           disabled={disabled}
         >
@@ -61,11 +99,14 @@ export const VehicleSelector = ({ disabled = false, onVehicleChange }: VehicleSe
         </button>
 
         {isVehicleDropdownOpen && (
-          <div className="absolute top-full right-0 left-0 z-20 mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
             {vehicles.map((vehicle) => (
               <button
                 key={vehicle.name}
-                onClick={() => handleVehicleChange(vehicle.name)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVehicleChange(vehicle.name);
+                }}
                 className="w-full px-4 py-3 text-left text-gray-600 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-gray-50"
               >
                 {vehicle.name}
@@ -76,9 +117,9 @@ export const VehicleSelector = ({ disabled = false, onVehicleChange }: VehicleSe
       </div>
 
       {/* Model Selector */}
-      <div className="relative flex-1">
+      <div className="relative flex-1" ref={modelRef}>
         <button
-          onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+          onClick={handleModelButtonClick}
           className={`flex w-full items-center justify-between rounded-lg border border-white/20 px-4 py-4 text-left font-medium shadow-lg backdrop-blur-md transition-all duration-200 ${
             selectedVehicle && availableModels.length > 0
               ? 'bg-white/10 text-gray-200 hover:bg-white/15'
@@ -95,11 +136,14 @@ export const VehicleSelector = ({ disabled = false, onVehicleChange }: VehicleSe
         </button>
 
         {isModelDropdownOpen && availableModels.length > 0 && (
-          <div className="absolute top-full right-0 left-0 z-20 mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
             {availableModels.map((model) => (
               <button
                 key={model}
-                onClick={() => handleModelChange(model)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModelChange(model);
+                }}
                 className="w-full px-4 py-3 text-left text-gray-600 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-gray-50"
               >
                 {model}
