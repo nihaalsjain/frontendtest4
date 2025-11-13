@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Camera, ChevronDown, Mic } from 'lucide-react';
+import { VehicleSelector } from '@/components/ui/vehicle-selector';
 
 interface WelcomeProps {
   disabled: boolean;
@@ -9,6 +10,9 @@ interface WelcomeProps {
   onLanguageChange: (lang: 'en' | 'kn' | 'hi' | 'ta') => void;
   voiceBase: 'Voice Assistant' | 'Live Assistant';
   onVoiceBaseChange: (base: 'Voice Assistant' | 'Live Assistant') => void;
+  selectedVehicle?: string;
+  selectedModel?: string;
+  onVehicleChange?: (vehicle: string, model: string) => void;
 }
 
 export const Welcome = ({
@@ -18,6 +22,9 @@ export const Welcome = ({
   onLanguageChange,
   voiceBase,
   onVoiceBaseChange,
+  selectedVehicle,
+  selectedModel,
+  onVehicleChange,
   ref,
 }: React.ComponentProps<'div'> & WelcomeProps) => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -158,6 +165,14 @@ export const Welcome = ({
                     : 'LIVE ASSISTANT'}
             </button>
           </div>
+
+          {/* Vehicle Selector - Only show for Voice Assistant */}
+          {voiceBase === 'Voice Assistant' && (
+            <VehicleSelector 
+              disabled={disabled || !language} 
+              onVehicleChange={onVehicleChange}
+            />
+          )}
 
           {/* Start Call Button */}
           <button

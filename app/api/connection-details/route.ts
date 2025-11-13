@@ -20,6 +20,8 @@ export async function GET(req: Request) {
 
     const language = new URL(req.url).searchParams.get('language') ?? 'en';
     const voiceBase = new URL(req.url).searchParams.get('voiceBase') ?? 'Voice Assistant';
+    const vehicle = new URL(req.url).searchParams.get('vehicle') ?? '';
+    const model = new URL(req.url).searchParams.get('model') ?? '';
     const participantName = 'user';
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
@@ -28,7 +30,7 @@ export async function GET(req: Request) {
       {
         identity: participantIdentity,
         name: participantName,
-        metadata: JSON.stringify({ language, voiceBase }),
+        metadata: JSON.stringify({ language, voiceBase, vehicle, model }),
       },
       roomName
     ); // ← no trailing comma here
