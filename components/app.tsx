@@ -32,17 +32,17 @@ export function App({ appConfig }: AppProps) {
   const updateMetadata = () => {
     if (room.state === 'connected') {
       try {
-        const metadata: any = { 
-          language, 
-          voiceBase
+        const metadata: any = {
+          language,
+          voiceBase,
         };
-        
+
         // Only include vehicle and model for Voice Assistant
         if (voiceBase === 'Voice Assistant') {
           metadata.vehicle = selectedVehicle;
           metadata.model = selectedModel;
         }
-        
+
         room.localParticipant.setMetadata(JSON.stringify(metadata));
       } catch (e) {
         console.warn('setMetadata failed:', e);
@@ -57,13 +57,13 @@ export function App({ appConfig }: AppProps) {
 
   const handleVoiceBaseChange = (base: 'Voice Assistant' | 'Live Assistant') => {
     setVoiceBase(base);
-    
+
     // Reset vehicle and model when switching to Live Assistant
     if (base === 'Live Assistant') {
       setSelectedVehicle('');
       setSelectedModel('');
     }
-    
+
     updateMetadata();
   };
 
@@ -100,8 +100,8 @@ export function App({ appConfig }: AppProps) {
           preConnectBuffer: appConfig.isPreConnectBufferEnabled,
         }),
         fetchConnectionDetails(
-          language, 
-          voiceBase, 
+          language,
+          voiceBase,
           voiceBase === 'Voice Assistant' ? selectedVehicle : '',
           voiceBase === 'Voice Assistant' ? selectedModel : ''
         ).then(async (connectionDetails) => {

@@ -168,10 +168,7 @@ export const Welcome = ({
 
           {/* Vehicle Selector - Only show for Voice Assistant */}
           {voiceBase === 'Voice Assistant' && (
-            <VehicleSelector 
-              disabled={disabled || !language} 
-              onVehicleChange={onVehicleChange}
-            />
+            <VehicleSelector disabled={disabled || !language} onVehicleChange={onVehicleChange} />
           )}
 
           {/* Start Call Button */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface VehicleSelectorProps {
@@ -9,12 +9,16 @@ interface VehicleSelectorProps {
   onVehicleChange?: (vehicle: string, model: string) => void;
 }
 
-export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange }: VehicleSelectorProps) => {
+export const VehicleSelector = ({
+  disabled = false,
+  show = true,
+  onVehicleChange,
+}: VehicleSelectorProps) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isVehicleDropdownOpen, setIsVehicleDropdownOpen] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
-  
+
   const vehicleRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +44,7 @@ export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange
     };
   }, []);
 
-  const selectedVehicleData = vehicles.find(v => v.name === selectedVehicle);
+  const selectedVehicleData = vehicles.find((v) => v.name === selectedVehicle);
   const availableModels = selectedVehicleData ? selectedVehicleData.models : [];
 
   // Don't render if show is false
@@ -64,7 +68,7 @@ export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange
     setSelectedVehicle(vehicle);
     setSelectedModel(''); // Reset model when vehicle changes
     setIsVehicleDropdownOpen(false);
-    
+
     // Call the callback with empty model since we reset it
     if (onVehicleChange) {
       onVehicleChange(vehicle, '');
@@ -74,7 +78,7 @@ export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange
   const handleModelChange = (model: string) => {
     setSelectedModel(model);
     setIsModelDropdownOpen(false);
-    
+
     // Call the callback with both vehicle and model
     if (onVehicleChange) {
       onVehicleChange(selectedVehicle, model);
@@ -123,7 +127,7 @@ export const VehicleSelector = ({ disabled = false, show = true, onVehicleChange
           className={`flex w-full items-center justify-between rounded-lg border border-white/20 px-4 py-4 text-left font-medium shadow-lg backdrop-blur-md transition-all duration-200 ${
             selectedVehicle && availableModels.length > 0
               ? 'bg-white/10 text-gray-200 hover:bg-white/15'
-              : 'bg-white/5 text-gray-400 cursor-not-allowed'
+              : 'cursor-not-allowed bg-white/5 text-gray-400'
           }`}
           disabled={disabled || !selectedVehicle || availableModels.length === 0}
         >
