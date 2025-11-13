@@ -11,6 +11,13 @@ import { Welcome } from '@/components/welcome';
 import useConnectionDetails from '@/hooks/useConnectionDetails';
 import type { AppConfig } from '@/lib/types';
 
+interface ParticipantMetadata {
+  language: 'en' | 'kn' | 'hi' | 'ta';
+  voiceBase: 'Voice Assistant' | 'Live Assistant';
+  vehicle?: string;
+  model?: string;
+}
+
 // Motion-wrap Welcome
 const MotionWelcome = motion.create(Welcome);
 
@@ -30,9 +37,9 @@ export function App({ appConfig }: AppProps) {
   const [selectedModel, setSelectedModel] = useState<string>('');
 
   const updateMetadata = () => {
-    if (room.state === 'connected') {
+    if (room.state === 'connected' && language) {
       try {
-        const metadata: any = {
+        const metadata: ParticipantMetadata = {
           language,
           voiceBase,
         };
